@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:ignore="AppCompatResource">
+
+    <item
+        android:id="@+id/playlist_button"
+        android:icon="@drawable/playlist_off"
+        android:onClick="playlist"
+        android:title=""
+        app:showAsAction="always"/>
+
+    <!--android:actionViewClass="android.widget.ToggleButton"-->
+
+    <!--<item-->
+    <!--android:id="@+id/search"-->
+    <!--android:actionViewClass="android.widget.SearchView"-->
+    <!--android:showAsAction="always"-->
+    <!--android:title=""/>-->
+</menu>

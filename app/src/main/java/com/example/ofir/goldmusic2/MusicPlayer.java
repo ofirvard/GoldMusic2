@@ -1,7 +1,10 @@
 package com.example.ofir.goldmusic2;
 
+import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.session.PlaybackState;
+import android.os.PowerManager;
 
 import java.util.ArrayList;
 
@@ -9,26 +12,34 @@ import java.util.ArrayList;
  * Created by ofir on 21-Aug-18.
  */
 
-public class MusicPlayer
+public class MusicPlayer implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
+        MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnPreparedListener
 {
     MediaPlayer mediaPlayer;
-    ArrayList<Song> playlist;
-    int playing = 0;
-    private boolean setup = false;
-    private PlaylistAdapter playlistAdapter;
+    PlaylistHandler playlistHandler;
+    PlaylistAdapter playlistAdapter;
 
     // sets up the media player and todo notification controls
-    MusicPlayer()
+    MusicPlayer(final PlaylistHandler playlistHandler, Context context)
     {
-        if (!setup)
+        if (this.mediaPlayer == null)
         {
-            playlist = new ArrayList();
+            this.playlistHandler = playlistHandler;
+
             this.mediaPlayer = new MediaPlayer();
+
             this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            this.mediaPlayer.setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK);
+            this.mediaPlayer.setOnCompletionListener(this);
+            this.mediaPlayer.setOnErrorListener(this);
+            this.mediaPlayer.setOnSeekCompleteListener(this);
+            this.mediaPlayer.setOnPreparedListener(this);
         }
+        else
+            this.mediaPlayer.reset();
     }
 
-    public void setPlaylistAdapter(PlaylistAdapter playlistAdapter)
+    void setPlaylistAdapter(PlaylistAdapter playlistAdapter)
     {
         this.playlistAdapter = playlistAdapter;
     }
@@ -39,19 +50,18 @@ public class MusicPlayer
         mediaPlayer.release();
     }
 
-    // plays the song at position i, if out of bounds exception i is reset to 0
-    public void play(int i)
+    // use only this
+    void play(Song song)
     {
         try
         {
-            Song song = playlist.get(i);
+
             mediaPlayer.reset();
             mediaPlayer.setDataSource(song.path);
             mediaPlayer.prepare();
-            mediaPlayer.start();
-            playing = i;
-        }
-        catch (Exception e)
+
+            //// TODO: 3/11/2019 show info
+        } catch (Exception e)
         {
             e.printStackTrace();
             reset();
@@ -59,9 +69,10 @@ public class MusicPlayer
     }
 
     // clears music player amd info shown
-    public void reset()
+    void reset()
     {
         mediaPlayer.reset();
+        // TODO: 3/11/2019  reset info shown and close notification
     }
 
     // if playing pauses, if paused plays and nothing playlist is empty
@@ -73,70 +84,50 @@ public class MusicPlayer
             mediaPlayer.start();
     }
 
-    // currently playing song is the new first
-    public void randomize()
+    void next()
     {
-    }
-
-    // if the playlist is empty first new song will be played
-    public void addNext(Song song)
-    {
-    }
-
-    public void addNext(ArrayList<Song> songs)
-    {
-    }
-
-    public void addAtEnd(Song song)
-    {
-        playlistAdapter.notifyDataSetChanged();
-        playlist.add(song);
-        if (playlist.size() == 1)
-        {
-            play(0);
-        }
-    }
-
-    public void addAtEnd(ArrayList<Song> songs)
-    {
-        playlistAdapter.notifyDataSetChanged();
-        playlist.addAll(songs);
-        if (playlist.size() == 1)
-        {
-            play(0);
-        }
-    }
-
-    // if i dosent exist do nothing
-    public void remove(int i)
-    {
-        playlistAdapter.notifyDataSetChanged();
-        try
-        {
-            if (i == playing)
-                next();
-            playlist.remove(i);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public void removeAll()
-    {
-    }
-
-    // if dosent exist resets to 0
-    public void next()
-    {
-        if (playing < playlist.size() - 1)
-            play(playing + 1);
+        if (playlistHandler.hasNext())
+            play(playlistHandler.getNext());
         else
+        {
+            playlistHandler.current = -1;
             reset();
+        }
     }
 
-    public void previous()
+    void previous()
     {
+        if (playlistHandler.hasPrevious())
+            play(playlistHandler.getPrevious());
+        else
+        {
+            playlistHandler.current = -1;
+            reset();
+        }
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp)
+    {
+        next();
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
+        return false;
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp)
+    {
+        mediaPlayer.start();
+        playlistAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onSeekComplete(MediaPlayer mp)
+    {
+
     }
 }

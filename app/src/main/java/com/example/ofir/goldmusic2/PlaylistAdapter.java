@@ -2,6 +2,7 @@ package com.example.ofir.goldmusic2;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.CardView;
@@ -37,7 +38,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     private MusicPlayer musicPlayer;
     private final OnStartDragListener mDragStartListener;
     private DrawerLayout drawer;
-
+    private PlaylistHandler playlistHandler;
 
     public static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -47,7 +48,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         ImageView imageView;
         CardView card_view;
 
-        public ViewHolder(View itemView)
+        ViewHolder(View itemView)
         {
             super(itemView);
             this.drag = itemView.findViewById(R.id.drag);
@@ -58,14 +59,17 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         }
     }
 
-    public PlaylistAdapter(ArrayList<Song> dataset, TabAdapter tabAdapter, Context context, MusicPlayer musicPlayer, OnStartDragListener dragStartListener, DrawerLayout drawer)
+    PlaylistAdapter(TabAdapter tabAdapter, Context context,
+                    MusicPlayer musicPlayer, OnStartDragListener dragStartListener,
+                    DrawerLayout drawer, PlaylistHandler playlistHandler)
     {
-        this.dataset = dataset;
         this.tabAdapter = tabAdapter;
         this.context = context;
         this.musicPlayer = musicPlayer;
         this.mDragStartListener = dragStartListener;
         this.drawer = drawer;
+        this.playlistHandler = playlistHandler;
+        this.dataset = playlistHandler.playlist;
     }
 
     @NonNull
@@ -84,17 +88,23 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     {
         final Song song = dataset.get(position);
         final int i = position;
+
         holder.title.setText(song.title);
         holder.time.setText(song.durationS);
+        if (playlistHandler.current == i)
+            holder.card_view.setBackgroundColor(context.getResources().getColor(R.color.pink));
+        else
+            holder.card_view.setBackgroundColor(context.getResources().getColor(R.color.grey_dark));
 
         Picasso.get().load(song.album.coverUri).placeholder(R.drawable.question_mark_low_res).into(holder.imageView);
 
-        View.OnClickListener play = new View.OnClickListener()
+        final View.OnClickListener play = new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                musicPlayer.play(i);
+                musicPlayer.play(playlistHandler.get(i));
+                notifyDataSetChanged();
             }
         };
         holder.time.setOnClickListener(play);
@@ -112,9 +122,9 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             }
         });
 
-
-        holder.card_view.setOnLongClickListener(new View.OnLongClickListener()
+        View.OnLongClickListener openMenu = new View.OnLongClickListener()
         {
+
             @Override
             public boolean onLongClick(View v)
             {
@@ -127,17 +137,17 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
                         switch (item.getItemId())
                         {
                             case R.id.go_to_album:
-                                tabAdapter.add(new SongAdapter(song.album.songs, tabAdapter, context, musicPlayer), 1);
+                                tabAdapter.add(new SongAdapter(song.album.songs, tabAdapter, context, musicPlayer, playlistHandler), 1);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
 
                             case R.id.go_to_artist:
-                                tabAdapter.add(new AlbumAdapter(song.album.artistPath.albums, tabAdapter, context, musicPlayer), 2);
+                                tabAdapter.add(new AlbumAdapter(song.album.artistPath.albums, tabAdapter, context, musicPlayer, playlistHandler), 2);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
 
                             case R.id.go_to_artist_songs:
-                                tabAdapter.add(new SongAdapter(song.album.artistPath.getSongs(), tabAdapter, context, musicPlayer), 1);
+                                tabAdapter.add(new SongAdapter(song.album.artistPath.getSongs(), tabAdapter, context, musicPlayer, playlistHandler), 1);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
                         }
@@ -148,21 +158,24 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
 
                 return true;
             }
-        });
+        };
+
+        holder.time.setOnLongClickListener(openMenu);
+        holder.title.setOnLongClickListener(openMenu);
+        holder.imageView.setOnLongClickListener(openMenu);
+
     }
 
     @Override
     public int getItemCount()
     {
-        return dataset.size();
+        return playlistHandler.size();
     }
 
     @Override
     public void onItemDismiss(int position)
     {
-        //todo add effect to music player
-//        dataset.remove(position);
-        musicPlayer.remove(position);//todo check if works
+        playlistHandler.remove(position);
         notifyItemRemoved(position);
     }
 
@@ -174,17 +187,22 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         {
             for (int i = fromPosition; i < toPosition; i++)
             {
-                Collections.swap(dataset, i, i + 1);
+                Collections.swap(playlistHandler.playlist, i, i + 1);
             }
         }
         else
         {
             for (int i = fromPosition; i > toPosition; i--)
             {
-                Collections.swap(dataset, i, i - 1);
+                Collections.swap(playlistHandler.playlist, i, i - 1);
             }
         }
+
         notifyItemMoved(fromPosition, toPosition);
+
+        if (fromPosition == playlistHandler.current)
+            playlistHandler.current = toPosition;
+
         return true;
     }
 }

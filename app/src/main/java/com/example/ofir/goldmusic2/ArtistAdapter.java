@@ -11,8 +11,11 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -36,8 +39,9 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
     private TabAdapter tabAdapter;
     private Context context;
     private MusicPlayer musicPlayer;
+    private PlaylistHandler playlistHandler;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder
+    static class ViewHolder extends RecyclerView.ViewHolder
     {
         TextView textView;
         //        ImageView single;
@@ -60,12 +64,14 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
         }
     }
 
-    public ArtistAdapter(ArrayList<Artist> dataset, TabAdapter tabAdapter, Context context, MusicPlayer musicPlayer)
+    ArtistAdapter(ArrayList<Artist> dataset, TabAdapter tabAdapter, Context context,
+                  MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
     {
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
         this.context = context;
         this.musicPlayer = musicPlayer;
+        this.playlistHandler = playlistHandler;
     }
 
     @NonNull
@@ -94,7 +100,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
             @Override
             public void onClick(View v)
             {
-                tabAdapter.add(new AlbumAdapter(artist.albums, tabAdapter, context, musicPlayer), 2);
+                tabAdapter.add(new AlbumAdapter(artist.albums, tabAdapter, context, musicPlayer, playlistHandler), 2);
             }
         });
 
@@ -103,15 +109,34 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
             @Override
             public boolean onLongClick(View v)
             {
-                Toast.makeText(context, "Long clicked, open menu",
-                        Toast.LENGTH_SHORT).show();
+                PopupMenu popup = new PopupMenu(context, v);
+                popup.getMenuInflater().inflate(R.menu.artist_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
+                {
+                    public boolean onMenuItemClick(MenuItem item)
+                    {
+                        switch (item.getItemId())
+                        {
+                            case R.id.play_next:
+                                playlistHandler.addArtist(artist, true);
+                                break;
 
-//                tabAdapter.add(new SongAdapter(artist.getSongs(), context, tabAdapter), 1);
+                            case R.id.add_all:
+                                playlistHandler.addArtist(artist, false);
+                                break;
+
+                            case R.id.show_all_songs:
+                                tabAdapter.add(new SongAdapter(artist.getSongs(), tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                break;
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
 
                 return true;
             }
         });
-        //todo set on long click menu
     }
 
     @Override

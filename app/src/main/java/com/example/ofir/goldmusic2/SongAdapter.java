@@ -3,8 +3,10 @@ package com.example.ofir.goldmusic2;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,6 +26,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
     private TabAdapter tabAdapter;
     private Context context;
     private MusicPlayer musicPlayer;
+    private PlaylistHandler playlistHandler;
 
     public static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -32,7 +35,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
         public ImageView imageView;
         CardView card_view;
 
-        public ViewHolder(View itemView)
+        ViewHolder(View itemView)
         {
             super(itemView);
             this.card_view = itemView.findViewById(R.id.card_view);
@@ -42,12 +45,14 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
         }
     }
 
-    public SongAdapter(ArrayList<Song> dataset, TabAdapter tabAdapter, Context context, MusicPlayer musicPlayer)
+    SongAdapter(ArrayList<Song> dataset, TabAdapter tabAdapter, Context context,
+                MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
     {
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
         this.context = context;
         this.musicPlayer = musicPlayer;
+        this.playlistHandler = playlistHandler;
     }
 
     @NonNull
@@ -74,10 +79,62 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
             @Override
             public void onClick(View v)
             {
-                musicPlayer.addAtEnd(song);
+                playlistHandler.addAtEnd(song);
             }
         });
-        //todo set on click and long click (open menu)
+
+        holder.card_view.setOnLongClickListener(new View.OnLongClickListener()
+        {
+            @Override
+            public boolean onLongClick(View v)
+            {
+                PopupMenu popup = new PopupMenu(context, v);
+                popup.getMenuInflater().inflate(R.menu.song_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
+                {
+                    public boolean onMenuItemClick(MenuItem item)
+                    {
+                        switch (item.getItemId())
+                        {
+                            case R.id.play_next:
+                                playlistHandler.addNext(song);
+                                break;
+
+                            case R.id.add_at_end:
+                                playlistHandler.addAtEnd(song);
+                                break;
+
+                            case R.id.add_all_next:
+                                playlistHandler.addSongs(dataset, true);
+                                break;
+
+                            case R.id.add_all_at_end:
+                                playlistHandler.addSongs(dataset, false);
+                                break;
+
+                            case R.id.go_to_album:
+                                tabAdapter.add(new SongAdapter(song.album.songs, tabAdapter,
+                                        context, musicPlayer, playlistHandler), 1);
+                                break;
+
+                            case R.id.go_to_artist:
+                                tabAdapter.add(new AlbumAdapter(song.album.artistPath.albums,
+                                        tabAdapter, context, musicPlayer, playlistHandler), 2);
+                                break;
+
+                            case R.id.go_to_artist_songs:
+                                tabAdapter.add(new SongAdapter(song.album.artistPath.getSongs(),
+                                        tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                break;
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+
+                return true;
+            }
+        });
     }
 
     @Override

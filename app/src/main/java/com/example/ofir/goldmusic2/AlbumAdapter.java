@@ -8,8 +8,10 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,14 +32,15 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
     private TabAdapter tabAdapter;
     private Context context;
     private MusicPlayer musicPlayer;
+    private PlaylistHandler playlistHandler;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder
+    static class ViewHolder extends RecyclerView.ViewHolder
     {
         TextView textView;
         ImageView imageView;
         CardView card_view;
 
-        public ViewHolder(View itemView)
+        ViewHolder(View itemView)
         {
             super(itemView);
             this.card_view = itemView.findViewById(R.id.card_view);
@@ -46,12 +49,14 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
         }
     }
 
-    public AlbumAdapter(ArrayList<Album> dataset, TabAdapter tabAdapter, Context context, MusicPlayer musicPlayer)
+    AlbumAdapter(ArrayList<Album> dataset, TabAdapter tabAdapter, Context context,
+                 MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
     {
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
         this.context = context;
         this.musicPlayer = musicPlayer;
+        this.playlistHandler = playlistHandler;
     }
 
     @NonNull
@@ -77,11 +82,39 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
             @Override
             public void onClick(View v)
             {
-                tabAdapter.add(new SongAdapter(album.songs, tabAdapter, context, musicPlayer), 1);
+                tabAdapter.add(new SongAdapter(album.songs, tabAdapter, context, musicPlayer, playlistHandler), 1);
             }
         });
 
-        //todo set on click and long click (open menu)
+        holder.card_view.setOnLongClickListener(new View.OnLongClickListener()
+        {
+            @Override
+            public boolean onLongClick(View v)
+            {
+                PopupMenu popup = new PopupMenu(context, v);
+                popup.getMenuInflater().inflate(R.menu.album_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
+                {
+                    public boolean onMenuItemClick(MenuItem item)
+                    {
+                        switch (item.getItemId())
+                        {
+                            case R.id.play_next:
+                                playlistHandler.addAlbum(album, true);
+                                break;
+
+                            case R.id.add_all:
+                                playlistHandler.addAlbum(album, false);
+                                break;
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+
+                return true;
+            }
+        });
     }
 
     @Override

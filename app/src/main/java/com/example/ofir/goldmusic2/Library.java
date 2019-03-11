@@ -19,6 +19,7 @@ import java.util.Comparator;
 public class Library
 {
     ArrayList<Artist> artists = new ArrayList<>();
+    ArrayList<Album> albums = new ArrayList<>();
     ArrayList<Song> songs = new ArrayList<>();
     Context context;
 
@@ -27,7 +28,7 @@ public class Library
         this.context = context;
     }
 
-    public void setup()
+    void setup()
     {
         final Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         final String[] cursor_cols = {MediaStore.Audio.Media._ID,
@@ -74,8 +75,7 @@ public class Library
         try
         {
             cursor.close();
-        }
-        catch (NullPointerException e)
+        } catch (NullPointerException e)
         {
             e.printStackTrace();
         }
@@ -103,13 +103,13 @@ public class Library
                 artists.add(new Artist(song));
         }
 
-        //sorts all songs
+        // sorts all songs
         sortSongs(songs);
 
-        //sort all artists
+        // sort all artists
         sortArtists(artists);
 
-        //sort artists albums and albums songs
+        // sort artists albums and albums songs
         for (Artist artist : artists)
         {
             //albums
@@ -119,8 +119,13 @@ public class Library
             {
                 //sort album songs
                 sortSongs(album.songs);
+
+                albums.add(album);
             }
         }
+
+        // sort all albums list
+        sortAlbums(albums);
     }
 
     private void loadCoverUri()

@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
 {
     Library library = new Library(this);
     private MusicPlayer musicPlayer;
+    private PlaylistHandler playlistHandler;
     private RecyclerView playlistView;
     private PlaylistAdapter playlistAdapter;
     private ArtistAdapter artistAdapter;
@@ -43,9 +44,11 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WAKE_LOCK}, 1);
 
-        musicPlayer = new MusicPlayer();
+        playlistHandler = new PlaylistHandler();
+        musicPlayer = new MusicPlayer(playlistHandler, getApplicationContext());
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -88,13 +91,15 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
         playlistView.setHasFixedSize(true);
         playlistView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 
-        playlistAdapter = new PlaylistAdapter(musicPlayer.playlist, tabAdapter, this, musicPlayer, this, drawer);
+        playlistAdapter = new PlaylistAdapter(tabAdapter, this,
+                musicPlayer, this, drawer, playlistHandler);
         playlistView.setAdapter(playlistAdapter);
 
         musicPlayer.setPlaylistAdapter(playlistAdapter);
+        playlistHandler.setPlaylistAdapter(playlistAdapter);
+        playlistHandler.setMusicPlayer(musicPlayer);
 
-        ItemTouchHelper.Callback callback =
-                new SimpleItemTouchHelperCallback(playlistAdapter);
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(playlistAdapter);
         touchHelper = new ItemTouchHelper(callback);
         touchHelper.attachToRecyclerView(playlistView);
     }
@@ -108,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             Long end = System.currentTimeMillis();
 
 //            artistAdapter.notifyDataSetChanged();
-            artistAdapter = new ArtistAdapter(library.artists, tabAdapter, this, musicPlayer);
+            artistAdapter = new ArtistAdapter(library.artists, tabAdapter, this, musicPlayer, playlistHandler);
 
             tabAdapter.add(artistAdapter, 2);
 
@@ -137,7 +142,6 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
 
     public void playlist(MenuItem item)
     {
-        // TODO: 15-Aug-18 open or close drawer and change icon
         if (!playlistShowing)
         {
             item.setIcon(R.drawable.playlist_on);
@@ -150,6 +154,16 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             playlistShowing = false;
             drawer.closeDrawer(Gravity.END);
         }
+    }
+
+    public void randomize(MenuItem item)
+    {
+        playlistHandler.randomize();
+    }
+
+    public void clear_playlist(MenuItem item)
+    {
+        playlistHandler.removeAll();
     }
 
     @Override

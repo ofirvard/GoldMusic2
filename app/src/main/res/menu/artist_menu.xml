@@ -8,4 +8,7 @@
         android:id="@+id/add_all"
         android:title="@string/add_all"/>
 
+    <item
+        android:id="@+id/show_all_songs"
+        android:title="@string/show_all_songs"/>
 </menu>

@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/play_next"
+        android:title="@string/play_next"/>
+
+    <item
+        android:id="@+id/add_at_end"
+        android:title="@string/add_at_end"/>
+
+    <item
+        android:id="@+id/add_all_next"
+        android:title="@string/add_all"/>
+
+    <item
+        android:id="@+id/add_all_at_end"
+        android:title="@string/add_all_at_end"/>
+
+    <item
         android:id="@+id/go_to_album"
         android:title="@string/go_to_album"/>
 
@@ -11,4 +27,5 @@
     <item
         android:id="@+id/go_to_artist_songs"
         android:title="@string/go_to_artist_songs"/>
+
 </menu>

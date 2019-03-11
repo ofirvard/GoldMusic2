@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_margin="3dp"
-        android:backgroundTint="@color/grey_dark"
+        app:cardBackgroundColor="@color/grey_dark"
         android:clickable="true"
         android:elevation="20dp"
         card_view:cardCornerRadius="5dp">

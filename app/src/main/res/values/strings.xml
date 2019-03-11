@@ -5,4 +5,10 @@
     <string name="go_to_album">Go-To Album</string>
     <string name="go_to_artist">Go-To Artist</string>
     <string name="go_to_artist_songs">Go-To Artist Songs</string>
+    <string name="play_next">Play Next</string>
+    <string name="add_all">Add All</string>
+    <string name="show_all_songs">Show All Songs</string>
+    <string name="add_at_end">Add At End</string>
+    <string name="add_all_at_end">Add All At End</string>
+
 </resources>

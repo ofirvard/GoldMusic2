@@ -9,7 +9,7 @@ public class Song
     public String title;
     public String path;
     public String albumName;
-//    public String albumArtistName;
+    //    public String albumArtistName;
     public String artistName;
     public String durationS;
     public long duration;
@@ -32,10 +32,16 @@ public class Song
         long h = temp / 3600;
         long m = (temp - h * 3600) / 60;
         long s = temp - (h * 3600 + m * 60);
-        if (h == 0)
-            this.durationS = m + ":" + s;
+        String seconds;
+        if (s < 10)
+            seconds = "0" + s;
         else
-            this.durationS = h + ":" + m + ":" + s;
+            seconds = "" + s;
+
+        if (h == 0)
+            this.durationS = m + ":" + seconds;
+        else
+            this.durationS = h + ":" + m + ":" + seconds;
     }
 
     public String toString()

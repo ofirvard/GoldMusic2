@@ -1,10 +1,14 @@
 package com.example.ofir.goldmusic2;
 
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.session.PlaybackState;
+import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 
@@ -12,7 +16,7 @@ import java.util.ArrayList;
  * Created by ofir on 21-Aug-18.
  */
 
-public class MusicPlayer implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
+public class MusicPlayer extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnPreparedListener
 {
     MediaPlayer mediaPlayer;
@@ -130,4 +134,30 @@ public class MusicPlayer implements MediaPlayer.OnCompletionListener, MediaPlaye
     {
 
     }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        //todo start playing here
+
+        //start sticky means service will be explicity started and stopped
+        return START_STICKY;
+    }
+
+
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        //stopping the player when service is destroyed
+        mediaPlayer.stop();
+    }
+
 }

@@ -166,13 +166,16 @@ public class PlaylistHandler
 
     void randomize()
     {
-        Song song = playlist.get(current);
-        playlist.remove(current);
-        Collections.shuffle(playlist);
-        playlist.add(0, song);
-        current = 0;
+        if (playlist.size() > 1)
+        {
+            Song song = playlist.get(current);
+            playlist.remove(current);
+            Collections.shuffle(playlist);
+            playlist.add(0, song);
+            current = 0;
 
-        playlistAdapter.notifyDataSetChanged();
+            playlistAdapter.notifyDataSetChanged();
+        }
     }
 
     int size()

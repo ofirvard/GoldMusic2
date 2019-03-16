@@ -1,6 +1,8 @@
 package com.example.ofir.goldmusic2;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -112,7 +114,6 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             library.setup();
             Long end = System.currentTimeMillis();
 
-//            artistAdapter.notifyDataSetChanged();
             artistAdapter = new ArtistAdapter(library.artists, tabAdapter, this, musicPlayer, playlistHandler);
 
             tabAdapter.add(artistAdapter, 2);
@@ -121,6 +122,8 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
 
             Toast.makeText(this, "it took " + (end - start) + " milliseconds to load library,\n" +
                     " and " + (end2 - end) + " milliseconds to load pager", Toast.LENGTH_LONG).show();
+
+            startService();
         }
     }
 
@@ -181,5 +184,12 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             tabAdapter.remove(pager.getCurrentItem());
         else
             super.onBackPressed();
+    }
+
+    public void startService()
+    {
+        Intent intent = new Intent(getApplicationContext(), MusicPlayer.class);
+        intent.setAction(MusicPlayer.ACTION_PAUSE);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 }

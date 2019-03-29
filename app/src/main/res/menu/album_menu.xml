@@ -2,10 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/play_next"
-        android:title="@string/play_next"/>
+        android:title="@string/play_next" />
 
     <item
         android:id="@+id/add_all"
-        android:title="@string/add_all"/>
+        android:title="@string/add_all" />
+
+    <item
+        android:id="@+id/go_to_artist_songs"
+        android:title="@string/go_to_artist_songs" />
 
 </menu>

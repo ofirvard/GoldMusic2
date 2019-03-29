@@ -1,11 +1,6 @@
 package com.example.ofir.goldmusic2;
 
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.PopupMenu;
@@ -19,7 +14,6 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -28,11 +22,10 @@ import java.util.ArrayList;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
 {
+    private Context context;
     private ArrayList<Album> dataset;
     private TabAdapter tabAdapter;
-    private Context context;
-    private MusicPlayer musicPlayer;
-    private PlaylistHandler playlistHandler;
+    private MusicPlayerHandler musicPlayerHandler;
 
     static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -49,14 +42,12 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
         }
     }
 
-    AlbumAdapter(ArrayList<Album> dataset, TabAdapter tabAdapter, Context context,
-                 MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
+    AlbumAdapter(Context context, ArrayList<Album> dataset, TabAdapter tabAdapter, MusicPlayerHandler musicPlayerHandler)
     {
+        this.context = context;
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
-        this.context = context;
-        this.musicPlayer = musicPlayer;
-        this.playlistHandler = playlistHandler;
+        this.musicPlayerHandler = musicPlayerHandler;
     }
 
     @NonNull
@@ -82,7 +73,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
             @Override
             public void onClick(View v)
             {
-                tabAdapter.add(new SongAdapter(album.songs, tabAdapter, context, musicPlayer, playlistHandler), 1);
+                tabAdapter.add(new SongAdapter(context, album.songs, tabAdapter, musicPlayerHandler), 1);
             }
         });
 
@@ -100,11 +91,15 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder>
                         switch (item.getItemId())
                         {
                             case R.id.play_next:
-                                playlistHandler.addAlbum(album, true);
+                                musicPlayerHandler.addSongs(album.songs, true);
                                 break;
 
                             case R.id.add_all:
-                                playlistHandler.addAlbum(album, false);
+                                musicPlayerHandler.addSongs(album.songs, false);
+                                break;
+
+                            case R.id.go_to_artist_songs:
+                                tabAdapter.add(new SongAdapter(context, album.artistPath.getSongs(), tabAdapter, musicPlayerHandler), 1);
                                 break;
                         }
                         return true;

@@ -22,11 +22,10 @@ import java.util.ArrayList;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
 {
+    private Context context;
     private ArrayList<Song> dataset;
     private TabAdapter tabAdapter;
-    private Context context;
-    private MusicPlayer musicPlayer;
-    private PlaylistHandler playlistHandler;
+    private MusicPlayerHandler musicPlayerHandler;
 
     public static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -45,14 +44,12 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
         }
     }
 
-    SongAdapter(ArrayList<Song> dataset, TabAdapter tabAdapter, Context context,
-                MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
+    SongAdapter(Context context, ArrayList<Song> dataset, TabAdapter tabAdapter, MusicPlayerHandler musicPlayerHandler)
     {
+        this.context = context;
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
-        this.context = context;
-        this.musicPlayer = musicPlayer;
-        this.playlistHandler = playlistHandler;
+        this.musicPlayerHandler = musicPlayerHandler;
     }
 
     @NonNull
@@ -79,7 +76,9 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
             @Override
             public void onClick(View v)
             {
-                playlistHandler.addAtEnd(song);
+                ArrayList<Song> songs = new ArrayList<>();
+                songs.add(song);
+                musicPlayerHandler.addSongs(songs, false);
             }
         });
 
@@ -97,34 +96,32 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder>
                         switch (item.getItemId())
                         {
                             case R.id.play_next:
-                                playlistHandler.addNext(song);
+                                musicPlayerHandler.addSongs(song, true);
                                 break;
 
                             case R.id.add_at_end:
-                                playlistHandler.addAtEnd(song);
+                                musicPlayerHandler.addSongs(song, false);
                                 break;
 
                             case R.id.add_all_next:
-                                playlistHandler.addSongs(dataset, true);
+                                musicPlayerHandler.addSongs(dataset, true);
                                 break;
 
                             case R.id.add_all_at_end:
-                                playlistHandler.addSongs(dataset, false);
+                                musicPlayerHandler.addSongs(dataset, false);
                                 break;
 
                             case R.id.go_to_album:
-                                tabAdapter.add(new SongAdapter(song.album.songs, tabAdapter,
-                                        context, musicPlayer, playlistHandler), 1);
+                                tabAdapter.add(new SongAdapter(context, song.album.songs, tabAdapter, musicPlayerHandler), 1);
                                 break;
 
                             case R.id.go_to_artist:
-                                tabAdapter.add(new AlbumAdapter(song.album.artistPath.albums,
-                                        tabAdapter, context, musicPlayer, playlistHandler), 2);
+                                tabAdapter.add(new AlbumAdapter(context, song.album.artistPath.albums,
+                                        tabAdapter, musicPlayerHandler), 2);
                                 break;
 
                             case R.id.go_to_artist_songs:
-                                tabAdapter.add(new SongAdapter(song.album.artistPath.getSongs(),
-                                        tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                tabAdapter.add(new SongAdapter(context, song.album.artistPath.getSongs(), tabAdapter, musicPlayerHandler), 1);
                                 break;
                         }
                         return true;

@@ -2,13 +2,11 @@ package com.example.ofir.goldmusic2;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -19,7 +17,6 @@ import android.widget.ImageView;
 
 //import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -32,13 +29,12 @@ import java.util.Collections;
 
 public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHolder> implements ItemTouchHelperAdapter
 {
+    private Context context;
     private ArrayList<Song> dataset;
     private TabAdapter tabAdapter;
-    private Context context;
-    private MusicPlayer musicPlayer;
+    private MusicPlayerHandler musicPlayerHandler;
     private final OnStartDragListener mDragStartListener;
     private DrawerLayout drawer;
-    private PlaylistHandler playlistHandler;
 
     public static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -59,17 +55,14 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         }
     }
 
-    PlaylistAdapter(TabAdapter tabAdapter, Context context,
-                    MusicPlayer musicPlayer, OnStartDragListener dragStartListener,
-                    DrawerLayout drawer, PlaylistHandler playlistHandler)
+    public PlaylistAdapter(Context context, TabAdapter tabAdapter, MusicPlayerHandler musicPlayerHandler, OnStartDragListener mDragStartListener, DrawerLayout drawer)
     {
-        this.tabAdapter = tabAdapter;
         this.context = context;
-        this.musicPlayer = musicPlayer;
-        this.mDragStartListener = dragStartListener;
+        this.dataset = musicPlayerHandler.getPlaylist();
+        this.tabAdapter = tabAdapter;
+        this.musicPlayerHandler = musicPlayerHandler;
+        this.mDragStartListener = mDragStartListener;
         this.drawer = drawer;
-        this.playlistHandler = playlistHandler;
-        this.dataset = playlistHandler.playlist;
     }
 
     @NonNull
@@ -91,7 +84,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
 
         holder.title.setText(song.title);
         holder.time.setText(song.durationS);
-        if (playlistHandler.current == i)
+        if (musicPlayerHandler.getCurrent() == i)
             holder.card_view.setBackgroundColor(context.getResources().getColor(R.color.pink));
         else
             holder.card_view.setBackgroundColor(context.getResources().getColor(R.color.grey_dark));
@@ -103,7 +96,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             @Override
             public void onClick(View v)
             {
-                musicPlayer.play(playlistHandler.get(i));
+                musicPlayerHandler.play(i);
                 notifyDataSetChanged();
             }
         };
@@ -137,17 +130,17 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
                         switch (item.getItemId())
                         {
                             case R.id.go_to_album:
-                                tabAdapter.add(new SongAdapter(song.album.songs, tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                tabAdapter.add(new SongAdapter(context, song.album.songs, tabAdapter, musicPlayerHandler), 1);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
 
                             case R.id.go_to_artist:
-                                tabAdapter.add(new AlbumAdapter(song.album.artistPath.albums, tabAdapter, context, musicPlayer, playlistHandler), 2);
+                                tabAdapter.add(new AlbumAdapter(context, song.album.artistPath.albums, tabAdapter, musicPlayerHandler), 2);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
 
                             case R.id.go_to_artist_songs:
-                                tabAdapter.add(new SongAdapter(song.album.artistPath.getSongs(), tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                tabAdapter.add(new SongAdapter(context, song.album.artistPath.getSongs(), tabAdapter, musicPlayerHandler), 1);
                                 drawer.closeDrawer(Gravity.END);
                                 break;
                         }
@@ -169,13 +162,13 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     @Override
     public int getItemCount()
     {
-        return playlistHandler.size();
+        return dataset.size();
     }
 
     @Override
     public void onItemDismiss(int position)
     {
-        playlistHandler.remove(position);
+        musicPlayerHandler.remove(position);
         notifyItemRemoved(position);
     }
 
@@ -187,21 +180,21 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         {
             for (int i = fromPosition; i < toPosition; i++)
             {
-                Collections.swap(playlistHandler.playlist, i, i + 1);
+                Collections.swap(dataset, i, i + 1);
             }
         }
         else
         {
             for (int i = fromPosition; i > toPosition; i--)
             {
-                Collections.swap(playlistHandler.playlist, i, i - 1);
+                Collections.swap(dataset, i, i - 1);
             }
         }
 
         notifyItemMoved(fromPosition, toPosition);
 
-        if (fromPosition == playlistHandler.current)
-            playlistHandler.current = toPosition;
+        if (fromPosition == musicPlayerHandler.getCurrent())
+            musicPlayerHandler.setCurrent(toPosition);
 
         return true;
     }

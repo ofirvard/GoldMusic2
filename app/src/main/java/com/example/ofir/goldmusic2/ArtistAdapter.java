@@ -1,33 +1,20 @@
 package com.example.ofir.goldmusic2;
 
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
-import java.io.FileDescriptor;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by ofir on 20-Jul-18.
@@ -35,11 +22,10 @@ import java.util.List;
 
 public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder>
 {
+    private Context context;
     private ArrayList<Artist> dataset;
     private TabAdapter tabAdapter;
-    private Context context;
-    private MusicPlayer musicPlayer;
-    private PlaylistHandler playlistHandler;
+    private MusicPlayerHandler musicPlayerHandler;
 
     static class ViewHolder extends RecyclerView.ViewHolder
     {
@@ -64,14 +50,12 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
         }
     }
 
-    ArtistAdapter(ArrayList<Artist> dataset, TabAdapter tabAdapter, Context context,
-                  MusicPlayer musicPlayer, PlaylistHandler playlistHandler)
+    public ArtistAdapter(Context context, ArrayList<Artist> dataset, TabAdapter tabAdapter, MusicPlayerHandler musicPlayerHandler)
     {
+        this.context = context;
         this.dataset = dataset;
         this.tabAdapter = tabAdapter;
-        this.context = context;
-        this.musicPlayer = musicPlayer;
-        this.playlistHandler = playlistHandler;
+        this.musicPlayerHandler = musicPlayerHandler;
     }
 
     @NonNull
@@ -100,7 +84,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
             @Override
             public void onClick(View v)
             {
-                tabAdapter.add(new AlbumAdapter(artist.albums, tabAdapter, context, musicPlayer, playlistHandler), 2);
+                tabAdapter.add(new AlbumAdapter(context, artist.albums, tabAdapter, musicPlayerHandler), 2);
             }
         });
 
@@ -118,15 +102,15 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ViewHolder
                         switch (item.getItemId())
                         {
                             case R.id.play_next:
-                                playlistHandler.addArtist(artist, true);
+                                musicPlayerHandler.addSongs(artist.getSongs(), true);
                                 break;
 
                             case R.id.add_all:
-                                playlistHandler.addArtist(artist, false);
+                                musicPlayerHandler.addSongs(artist.getSongs(), false);
                                 break;
 
                             case R.id.show_all_songs:
-                                tabAdapter.add(new SongAdapter(artist.getSongs(), tabAdapter, context, musicPlayer, playlistHandler), 1);
+                                tabAdapter.add(new SongAdapter(context, artist.getSongs(), tabAdapter, musicPlayerHandler), 1);
                                 break;
                         }
                         return true;

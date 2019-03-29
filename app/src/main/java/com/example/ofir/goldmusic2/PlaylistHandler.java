@@ -2,166 +2,77 @@ package com.example.ofir.goldmusic2;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by ofir on 05-Oct-18.
  * This will handle the playlist, all requests and inserts will be handled by it
  */
 
-public class PlaylistHandler
+class PlaylistHandler
 {
-    MusicPlayer musicPlayer;
-    PlaylistAdapter playlistAdapter;
-    /*private */ ArrayList<Song> playlist = new ArrayList<>();
-    int current = -1;
-
-    void setMusicPlayer(MusicPlayer musicPlayer)
-    {
-        this.musicPlayer = musicPlayer;
-    }
-
-    void setPlaylistAdapter(PlaylistAdapter playlistAdapter)
-    {
-        this.playlistAdapter = playlistAdapter;
-    }
+    private ArrayList<Song> playlist = new ArrayList<>();
+    private int current = -1;
 
     Song get(int i)
     {
         current = i;
-        playlistAdapter.notifyDataSetChanged();
         return playlist.get(i);
     }
 
-    Song getNext()
+    int getNext()
     {
-        if (current + 1 < playlist.size())
-            return playlist.get(++current);
-        return null;
+        if (hasNext())
+            return ++current;
+        return current = -1;
+//        return -1;
     }
 
-    boolean hasNext()
+    private boolean hasNext()
     {
         return current < playlist.size() - 1;
     }
 
-    Song getPrevious()
+    int getPrevious()
     {
-        if (current > 0)
-            return playlist.get(--current);
-        return null;
+        if (hasPrevious())
+            return --current;
+
+        return isEmpty() ? -1 : 0;
     }
 
-    boolean hasPrevious()
+    private boolean hasPrevious()
     {
         return current > 0;
     }
 
-    private void wasEmpty()
+    void addSongs(List<Song> songs, boolean asNext)
     {
-        current = 0;
-        musicPlayer.play(playlist.get(0));
-    }
-
-    void addNext(Song song)
-    {
-        boolean empty = playlist.isEmpty();
-
-        playlist.add(current + 1, song);
-        playlistAdapter.notifyDataSetChanged();
-
-        if (empty)
-            wasEmpty();
-    }
-
-    void addAtEnd(Song song)
-    {
-        boolean empty = playlist.isEmpty();
-
-        playlist.add(song);
-        playlistAdapter.notifyDataSetChanged();
-
-        if (empty)
-            wasEmpty();
-    }
-
-    void addSongs(ArrayList<Song> songs, boolean asNext)
-    {
-        boolean empty = playlist.isEmpty();
-
         if (asNext)
             playlist.addAll(current + 1, songs);
         else
             playlist.addAll(songs);
-
-        if (empty)
-            wasEmpty();
-
-        playlistAdapter.notifyDataSetChanged();
     }
 
-    void addAlbum(Album album, boolean asNext)
+    void addSongs(Song song, boolean asNext)
     {
-        boolean empty = playlist.isEmpty();
-
         if (asNext)
-            playlist.addAll(current + 1, album.songs);
+            playlist.add(current + 1, song);
         else
-            playlist.addAll(album.songs);
-
-        if (empty)
-            wasEmpty();
-
-        playlistAdapter.notifyDataSetChanged();
-    }
-
-    void addArtist(Artist artist, boolean asNext)
-    {
-        boolean empty = playlist.isEmpty();
-
-        if (asNext)
-            playlist.addAll(current + 1, artist.getSongs());
-        else
-            playlist.addAll(artist.getSongs());
-
-        if (empty)
-            wasEmpty();
-
-        playlistAdapter.notifyDataSetChanged();
+            playlist.add(song);
     }
 
     void remove(int i)
     {
-        if (current < i)
-        {
-            playlist.remove(i);
-        }
-        else if (current > i)
-        {
-            playlist.remove(i);
+        if (current >= i)
             current--;
-        }
-        else if (current == i)
-        {
-            if (hasNext())
-                musicPlayer.play(getNext());
-            else
-            {
-                musicPlayer.reset();
-                current = -1;
-            }
-
-            remove(i);
-        }
-
-        playlistAdapter.notifyDataSetChanged();
+        playlist.remove(i);
     }
 
     void removeAll()
     {
         playlist.clear();
-        musicPlayer.reset();
         current = -1;
-        playlistAdapter.notifyDataSetChanged();
     }
 
     void randomize()
@@ -173,13 +84,31 @@ public class PlaylistHandler
             Collections.shuffle(playlist);
             playlist.add(0, song);
             current = 0;
-
-            playlistAdapter.notifyDataSetChanged();
         }
     }
 
     int size()
     {
         return playlist.size();
+    }
+
+    int getCurrent()
+    {
+        return current;
+    }
+
+    public void setCurrent(int current)
+    {
+        this.current = current;
+    }
+
+    public ArrayList<Song> getPlaylist()
+    {
+        return playlist;
+    }
+
+    boolean isEmpty()
+    {
+        return playlist.isEmpty();
     }
 }

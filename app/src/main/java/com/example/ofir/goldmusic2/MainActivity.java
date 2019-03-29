@@ -1,19 +1,17 @@
 package com.example.ofir.goldmusic2;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -27,8 +25,9 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity implements OnStartDragListener
 {
     Library library = new Library(this);
-    private MusicPlayer musicPlayer;
-    private PlaylistHandler playlistHandler;
+    //    private MusicPlayerService musicPlayerService;
+//    private PlaylistHandler playlistHandler;
+    private MusicPlayerHandler musicPlayerHandler;
     private RecyclerView playlistView;
     private PlaylistAdapter playlistAdapter;
     private ArtistAdapter artistAdapter;
@@ -39,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
     private DrawerLayout drawer;
     private Menu toolbarMenu;
     private ItemTouchHelper touchHelper;
+    private Intent playIntent;
+    private boolean musicBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -49,8 +50,9 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WAKE_LOCK}, 1);
 
-        playlistHandler = new PlaylistHandler();
-        musicPlayer = new MusicPlayer(playlistHandler, getApplicationContext());
+        musicPlayerHandler = new MusicPlayerHandler(this);
+//        playlistHandler = new PlaylistHandler();
+//        musicPlayerService = new MusicPlayerService(playlistHandler, getApplicationContext());
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -93,18 +95,40 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
         playlistView.setHasFixedSize(true);
         playlistView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 
-        playlistAdapter = new PlaylistAdapter(tabAdapter, this,
-                musicPlayer, this, drawer, playlistHandler);
+        playlistAdapter = new PlaylistAdapter(this, tabAdapter, musicPlayerHandler, this, drawer);
         playlistView.setAdapter(playlistAdapter);
+        musicPlayerHandler.setPlaylistAdapter(playlistAdapter);
 
-        musicPlayer.setPlaylistAdapter(playlistAdapter);
-        playlistHandler.setPlaylistAdapter(playlistAdapter);
-        playlistHandler.setMusicPlayer(musicPlayer);
+//        musicPlayerService.setPlaylistAdapter(playlistAdapter);
+//        playlistHandler.setPlaylistAdapter(playlistAdapter);
+//        playlistHandler.setMusicPlayerService(musicPlayerService);
 
         ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(playlistAdapter);
         touchHelper = new ItemTouchHelper(callback);
         touchHelper.attachToRecyclerView(playlistView);
     }
+
+    //connect to the service
+    private ServiceConnection musicConnection = new ServiceConnection()
+    {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service)
+        {
+//            MusicPlayerService.MusicBinder binder = (MusicPlayerService.MusicBinder) service;
+            //get service
+//            musicPlayerService = binder.getService();
+            //pass list
+//            musicPlayerService.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name)
+        {
+            musicBound = false;
+        }
+    };
 
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
     {
@@ -114,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             library.setup();
             Long end = System.currentTimeMillis();
 
-            artistAdapter = new ArtistAdapter(library.artists, tabAdapter, this, musicPlayer, playlistHandler);
+            artistAdapter = new ArtistAdapter(this, library.artists, tabAdapter, musicPlayerHandler);
 
             tabAdapter.add(artistAdapter, 2);
 
@@ -123,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
             Toast.makeText(this, "it took " + (end - start) + " milliseconds to load library,\n" +
                     " and " + (end2 - end) + " milliseconds to load pager", Toast.LENGTH_LONG).show();
 
-            startService();
+//            startService();
         }
     }
 
@@ -161,18 +185,20 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
 
     public void randomize(MenuItem item)
     {
-        playlistHandler.randomize();
+        drawer.closeDrawer(Gravity.END);
+        musicPlayerHandler.randomize();
     }
 
     public void clear_playlist(MenuItem item)
     {
-        playlistHandler.removeAll();
+        drawer.closeDrawer(Gravity.END);
+        musicPlayerHandler.removeAll();
     }
 
     @Override
     protected void onDestroy()
     {
-        musicPlayer.end();
+//        musicPlayerService.end();
         //todo end notification here too
         super.onDestroy();
     }
@@ -188,8 +214,11 @@ public class MainActivity extends AppCompatActivity implements OnStartDragListen
 
     public void startService()
     {
-        Intent intent = new Intent(getApplicationContext(), MusicPlayer.class);
-        intent.setAction(MusicPlayer.ACTION_PAUSE);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        if (playIntent == null)
+        {
+            playIntent = new Intent(this, MusicPlayerService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
     }
 }
